@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         ]);
     }
     elseif ($type === 'batches') {
-        $result = $db->query("SELECT b.batch_code, b.status, b.start_time, b.end_time, m.fish_scale_type, DATE_FORMAT(b.start_time, '%Y-%m-%d') as date FROM batches b LEFT JOIN materials m ON b.material_id = m.material_id ORDER BY b.start_time DESC LIMIT 10");
+        $result = $db->query("SELECT b.batch_code, b.status, b.start_time, b.end_time, b.current_stage, m.fish_scale_type, u.full_name as operator, DATE_FORMAT(b.start_time, '%Y-%m-%d') as date FROM batches b LEFT JOIN materials m ON b.material_id = m.material_id LEFT JOIN users u ON b.user_id = u.user_id ORDER BY b.start_time DESC LIMIT 20");
         
         $batches = [];
         while ($row = $result->fetch_assoc()) {
