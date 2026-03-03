@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef  } from 'react';
 import {
   StyleSheet, Text, View, ScrollView, RefreshControl,
   Alert, ActivityIndicator, Platform, TextInput,
@@ -225,29 +225,145 @@ function AddFeedbackModal({ visible, onClose, onSuccess, batches }) {
 }
 
 // ─── Tab screens ──────────────────────────────────────────────────────────────
-function DashboardTab({ dashboardData, controlling, sendCommand }) {
-  const status = dashboardData.machineStatus || 'idle';
-  const statusColor = { idle: C.slate, running: C.success, paused: C.warning, stopped: C.error, cleaning: C.info }[status] || C.slate;
+// ─── Stage config (5s demo, change to real ESP32 durations later) ─────────────
+const STAGES = [
+  { key: 'extraction',   label: 'Extraction',    duration: 5  },
+  { key: 'filtration',   label: 'Filtration',    duration: 5  },
+  { key: 'formulation',  label: 'Formulation',   duration: 5  },
+  { key: 'film_formation', label: 'Film Formation', duration: 5 },
+];
 
-  const controls = () => {
-    if (status === 'cleaning') return (
-      <ControlBtn label="End Cleaning" iconName="checkmark-circle" colors={[C.tealLight, C.ocean]} onPress={() => sendCommand('end_cleaning')} disabled={controlling} />
-    );
-    return (
-      <>
-        {status === 'idle' && <ControlBtn label="Start" iconName="play" colors={['#43C6AC', '#2A7A6B']} onPress={() => sendCommand('start')} disabled={controlling} />}
-        {status === 'running' && <ControlBtn label="Pause" iconName="pause" colors={['#E8A020', '#B36B00']} onPress={() => sendCommand('pause')} disabled={controlling} />}
-        {status === 'paused' && <ControlBtn label="Continue" iconName="play-forward" colors={['#43C6AC', '#2A7A6B']} onPress={() => sendCommand('continue')} disabled={controlling} />}
-        {(status === 'running' || status === 'paused') && <ControlBtn label="Stop" iconName="stop" colors={['#C05040', '#8B2020']} onPress={() => sendCommand('stop')} disabled={controlling} />}
-        {status === 'idle' && <ControlBtn label="Cleaning" iconName="water" colors={['#5B9BD5', '#2E6DA4']} onPress={() => sendCommand('cleaning')} disabled={controlling} />}
-      </>
-    );
+// ─── Demo machine state hook ──────────────────────────────────────────────────
+function useDemoMachine() {
+  const [demoMode, setDemoMode] = useState(false);
+  const [demoStatus, setDemoStatus] = useState('idle');
+  const [stageIndex, setStageIndex] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(0);
+  const [temps, setTemps] = useState({ c1: 25.0, c3: 24.5 });
+  const timerRef = useRef(null);
+  const pausedRef = useRef(false);
+
+  const clearTimer = () => { if (timerRef.current) clearInterval(timerRef.current); };
+
+  const startStage = (idx) => {
+    clearTimer();
+    if (idx >= STAGES.length) {
+      setDemoStatus('idle');
+      setStageIndex(0);
+      setTimeLeft(0);
+      return;
+    }
+    setStageIndex(idx);
+    setTimeLeft(STAGES[idx].duration);
+    pausedRef.current = false;
+
+    timerRef.current = setInterval(() => {
+      if (pausedRef.current) return;
+      setTimeLeft(t => {
+        if (t <= 1) {
+          startStage(idx + 1);
+          return 0;
+        }
+        // Simulate temps rising during extraction
+        setTemps(prev => ({
+          c1: +(prev.c1 + (Math.random() * 0.4 - 0.1)).toFixed(1),
+          c3: +(prev.c3 + (Math.random() * 0.3 - 0.1)).toFixed(1),
+        }));
+        return t - 1;
+      });
+    }, 1000);
   };
+
+  const demoCommand = (cmd) => {
+    switch (cmd) {
+      case 'start':
+        setDemoStatus('running');
+        startStage(0);
+        break;
+      case 'pause':
+        pausedRef.current = true;
+        setDemoStatus('paused');
+        break;
+      case 'continue':
+        pausedRef.current = false;
+        setDemoStatus('running');
+        break;
+      case 'stop':
+        clearTimer();
+        setDemoStatus('idle');
+        setStageIndex(0);
+        setTimeLeft(0);
+        setTemps({ c1: 25.0, c3: 24.5 });
+        break;
+      case 'cleaning':
+        setDemoStatus('cleaning');
+        setTimeLeft(5);
+        timerRef.current = setInterval(() => {
+          setTimeLeft(t => {
+            if (t <= 1) { clearTimer(); setDemoStatus('idle'); return 0; }
+            return t - 1;
+          });
+        }, 1000);
+        break;
+      case 'end_cleaning':
+        clearTimer();
+        setDemoStatus('idle');
+        setTimeLeft(0);
+        break;
+    }
+  };
+
+  useEffect(() => () => clearTimer(), []);
+
+  return { demoMode, setDemoMode, demoStatus, demoCommand, stageIndex, timeLeft, temps };
+}
+
+function DashboardTab({ dashboardData, controlling, sendCommand, demoMode, setDemoMode, demoStatus, demoCommand, stageIndex, timeLeft, temps }) {
+  const status = demoMode ? demoStatus : (dashboardData.machineStatus || 'idle');
+  const statusColor = {
+    idle:     C.slate,
+    running:  C.success,
+    paused:   C.warning,
+    stopped:  C.error,
+    cleaning: C.info,
+  }[status] || C.slate;
+
+  const currentStageLabel = demoMode && status === 'running'
+    ? STAGES[stageIndex]?.label
+    : dashboardData.currentStage?.replace(/_/g, ' ');
+
+  const handleCommand = (cmd) => {
+    if (demoMode) demoCommand(cmd);
+    else sendCommand(cmd);
+  };
+
+  const formatTime = (s) => `${Math.floor(s / 60).toString().padStart(2,'0')}:${(s % 60).toString().padStart(2,'0')}`;
+
+  // Always-visible 4 buttons, disabled contextually
+  const isRunning  = status === 'running';
+  const isPaused   = status === 'paused';
+  const isIdle     = status === 'idle';
+  const isCleaning = status === 'cleaning';
+  const isBusy     = isRunning || isPaused;
 
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 14, paddingBottom: 16 }}>
+
+      {/* Demo mode toggle */}
+      <SpringButton onPress={() => setDemoMode(d => !d)}>
+        <View style={[styles.demoToggle, demoMode && styles.demoToggleActive]}>
+          <Ionicons name={demoMode ? 'flask' : 'flask-outline'} size={15} color={demoMode ? C.teal : C.slate} />
+          <Text style={[styles.demoToggleText, demoMode && { color: C.teal }]}>
+            {demoMode ? 'Demo Mode ON — no ESP32 needed' : 'Demo Mode OFF — tap to test'}
+          </Text>
+        </View>
+      </SpringButton>
+
+      {/* Machine status card */}
       <Card style={styles.statusCard}>
         <CardAccent />
+
+        {/* Status row */}
         <View style={styles.statusRow}>
           <View>
             <Text style={styles.statusLabel}>MACHINE STATUS</Text>
@@ -255,20 +371,102 @@ function DashboardTab({ dashboardData, controlling, sendCommand }) {
               <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
               <Text style={[styles.statusValue, { color: statusColor }]}>{status.toUpperCase()}</Text>
             </View>
-            {dashboardData.currentBatch && <Text style={styles.batchCode}>Batch: {dashboardData.currentBatch}</Text>}
-            {dashboardData.currentStage && <Text style={styles.batchStage}>{dashboardData.currentStage.replace(/_/g, ' ').toUpperCase()}</Text>}
+            {(dashboardData.currentBatch || demoMode) && (
+              <Text style={styles.batchCode}>
+                Batch: {demoMode ? 'DEMO-001' : dashboardData.currentBatch}
+              </Text>
+            )}
+            {currentStageLabel && (
+              <Text style={styles.batchStage}>{currentStageLabel.toUpperCase()}</Text>
+            )}
           </View>
-          {controlling && <ActivityIndicator color={C.teal} size="large" />}
+          {controlling && !demoMode && <ActivityIndicator color={C.teal} size="large" />}
         </View>
-        <View style={styles.ctrlRow}>{controls()}</View>
+
+        {/* Stage progress */}
+        {(isRunning || isPaused) && (
+          <View style={styles.stageBox}>
+            <View style={styles.stageHeader}>
+              <Text style={styles.stageTitle}>
+                {demoMode ? STAGES[stageIndex]?.label : currentStageLabel} 
+              </Text>
+              <View style={styles.timerBadge}>
+                <Ionicons name="timer-outline" size={13} color={C.ocean} />
+                <Text style={styles.timerText}>{formatTime(timeLeft || dashboardData.timeLeft || 0)}</Text>
+              </View>
+            </View>
+            {/* Stage progress dots */}
+            <View style={styles.stageDots}>
+              {STAGES.map((s, i) => (
+                <View key={i} style={styles.stageDotItem}>
+                  <View style={[
+                    styles.stageDot,
+                    i < stageIndex  && styles.stageDotDone,
+                    i === stageIndex && styles.stageDotActive,
+                  ]} />
+                  <Text style={[styles.stageDotLabel, i === stageIndex && { color: C.teal }]}>{s.label}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {/* Temperatures */}
+        {(isRunning || isPaused || isCleaning) && (
+          <View style={styles.tempsRow}>
+            {[
+              { label: 'C1 Temp', value: demoMode ? temps.c1 : (dashboardData.tempC1 ?? '--') },
+              { label: 'C3 Temp', value: demoMode ? temps.c3 : (dashboardData.tempC3 ?? '--') },
+            ].map((t, i) => (
+              <View key={i} style={styles.tempCard}>
+                <Ionicons name="thermometer-outline" size={18} color={C.ocean} />
+                <Text style={styles.tempValue}>{t.value}°C</Text>
+                <Text style={styles.tempLabel}>{t.label}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* 4 control buttons — always visible */}
+        <View style={styles.ctrlRow}>
+          <ControlBtn
+            label="Start"
+            iconName="play"
+            colors={isIdle ? ['#43C6AC', '#2A7A6B'] : ['#aaa', '#888']}
+            onPress={() => handleCommand('start')}
+            disabled={!isIdle || controlling}
+          />
+          <ControlBtn
+            label={isPaused ? 'Resume' : 'Pause'}
+            iconName={isPaused ? 'play-forward' : 'pause'}
+            colors={isBusy ? ['#E8A020', '#B36B00'] : ['#aaa', '#888']}
+            onPress={() => handleCommand(isPaused ? 'continue' : 'pause')}
+            disabled={!isBusy || controlling}
+          />
+          <ControlBtn
+            label="Stop"
+            iconName="stop"
+            colors={isBusy ? ['#C05040', '#8B2020'] : ['#aaa', '#888']}
+            onPress={() => handleCommand('stop')}
+            disabled={!isBusy || controlling}
+          />
+          <ControlBtn
+            label="Clean"
+            iconName="water"
+            colors={isIdle ? ['#5B9BD5', '#2E6DA4'] : isCleaning ? ['#43C6AC', '#2A7A6B'] : ['#aaa', '#888']}
+            onPress={() => handleCommand(isCleaning ? 'end_cleaning' : 'cleaning')}
+            disabled={(!isIdle && !isCleaning) || controlling}
+          />
+        </View>
       </Card>
 
+      {/* Metrics */}
       <View style={styles.metricsGrid}>
         {[
-          { icon: 'layers',         label: 'Batches',   value: dashboardData.totalBatches },
+          { icon: 'layers',         label: 'Batches',   value: dashboardData.totalBatches   },
           { icon: 'checkmark-done', label: 'Success',   value: `${dashboardData.successRate}%` },
-          { icon: 'time',           label: 'Avg Time',  value: `${dashboardData.avgTime}m` },
-          { icon: 'warning',        label: 'Low Stock', value: dashboardData.lowStock },
+          { icon: 'time',           label: 'Avg Time',  value: `${dashboardData.avgTime}m`  },
+          { icon: 'warning',        label: 'Low Stock', value: dashboardData.lowStock       },
         ].map((m, i) => (
           <Card key={i} style={styles.metricCard}>
             <Ionicons name={m.icon} size={22} color={C.ocean} style={{ marginBottom: 6 }} />
@@ -393,6 +591,9 @@ export default function DashboardScreen({
   const [showAddInventory, setShowAddInventory] = useState(false);
   const [showAddFeedback, setShowAddFeedback]   = useState(false);
 
+  // ADD THIS:
+  const { demoMode, setDemoMode, demoStatus, demoCommand, stageIndex, timeLeft, temps } = useDemoMachine();
+
   const sendCommand = (command) => {
     const confirmCmds = {
       stop:     { title: 'Stop Machine',     msg: 'This will terminate the current batch. It cannot be resumed.', btn: 'Stop' },
@@ -424,7 +625,20 @@ export default function DashboardScreen({
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'dashboard': return <DashboardTab dashboardData={dashboardData} controlling={controlling} sendCommand={sendCommand} />;
+      case 'dashboard': return (
+        <DashboardTab
+          dashboardData={dashboardData}
+          controlling={controlling}
+          sendCommand={sendCommand}
+          demoMode={demoMode}
+          setDemoMode={setDemoMode}
+          demoStatus={demoStatus}
+          demoCommand={demoCommand}
+          stageIndex={stageIndex}
+          timeLeft={timeLeft}
+          temps={temps}
+        />
+      );
       case 'batches':   return <BatchesTab   batches={batches}   />;
       case 'inventory': return <InventoryTab materials={materials} onAdd={() => setShowAddInventory(true)} />;
       case 'feedback':  return <FeedbackTab  feedback={feedback}   onAdd={() => setShowAddFeedback(true)}  />;
@@ -434,6 +648,24 @@ export default function DashboardScreen({
   return (
     <LinearGradient colors={['#4ECDC4', '#3A7CA5', '#2C6B7F']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.container}>
       <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
+      {/* Bubbles — same as login */}
+      {[
+        { w: 380, h: 380, r: 190, top: -140, right: -60  },
+        { w: 260, h: 260, r: 130, bottom: 60, left: -80  },
+        { w: 150, h: 150, r: 75,  top: '30%', right: -40 },
+        { w: 100, h: 100, r: 50,  top: '55%', left: 10   },
+      ].map((b, i) => (
+        <View key={i} style={{
+          position: 'absolute',
+          width: b.w, height: b.h, borderRadius: b.r,
+          top: b.top, bottom: b.bottom, left: b.left, right: b.right,
+          backgroundColor: 'rgba(255,255,255,0.08)',
+          borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.25)',
+          shadowColor: '#ffffff', shadowOffset: { width: -6, height: -6 },
+          shadowOpacity: 0.45, shadowRadius: 18,
+        }} />
+      ))}
+      
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
@@ -642,4 +874,48 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 16,
   },
+  demoToggle: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: 'rgba(248,250,251,0.85)', borderRadius: 12,
+    paddingVertical: 10, paddingHorizontal: 14,
+    borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.7)',
+    shadowColor: '#ffffff', shadowOffset: { width: -3, height: -3 },
+    shadowOpacity: 0.5, shadowRadius: 8, elevation: 4,
+  },
+  demoToggleActive: {
+    borderColor: 'rgba(78,205,196,0.5)',
+    backgroundColor: 'rgba(248,252,252,0.95)',
+  },
+  demoToggleText: { fontSize: 12, fontWeight: '600', color: C.slate, flex: 1 },
+
+  stageBox: {
+    backgroundColor: 'rgba(237,242,244,0.7)',
+    borderRadius: 14, padding: 14, marginBottom: 14,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.9)',
+  },
+  stageHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  stageTitle: { fontSize: 13, fontWeight: '800', color: C.deep },
+  timerBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    backgroundColor: 'rgba(78,205,196,0.15)', borderRadius: 20,
+    paddingVertical: 4, paddingHorizontal: 10,
+  },
+  timerText: { fontSize: 13, fontWeight: '800', color: C.ocean, fontVariant: ['tabular-nums'] },
+
+  stageDots: { flexDirection: 'row', justifyContent: 'space-between' },
+  stageDotItem: { alignItems: 'center', flex: 1 },
+  stageDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: C.cloud, marginBottom: 4 },
+  stageDotDone: { backgroundColor: C.success },
+  stageDotActive: { backgroundColor: C.teal, width: 12, height: 12, borderRadius: 6 },
+  stageDotLabel: { fontSize: 9, color: C.slate, fontWeight: '600', textAlign: 'center' },
+
+  tempsRow: { flexDirection: 'row', gap: 10, marginBottom: 14 },
+  tempCard: {
+    flex: 1, alignItems: 'center', gap: 4,
+    backgroundColor: 'rgba(237,242,244,0.7)',
+    borderRadius: 12, paddingVertical: 12,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.9)',
+  },
+  tempValue: { fontSize: 18, fontWeight: '900', color: C.deep },
+  tempLabel: { fontSize: 10, fontWeight: '700', color: C.steel, textTransform: 'uppercase', letterSpacing: 0.4 },
 });
