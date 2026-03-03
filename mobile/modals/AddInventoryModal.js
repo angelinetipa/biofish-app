@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Modal, ScrollView, KeyboardAvoidingView, Alert, ActivityIndicator, Platform, StyleSheet } from 'react-native';
+import { View, Text, Modal, ScrollView, KeyboardAvoidingView, Alert, ActivityIndicator, Platform, StyleSheet, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
@@ -50,21 +50,15 @@ export default function AddInventoryModal({ visible, onClose, onSuccess }) {
             {/* Type toggle — fixed: explicit bg + text colors */}
             <View style={styles.toggleRow}>
               {[
-                { key: 'fish_scales', label: 'Fish Scales', icon: 'fish-outline'  },
-                { key: 'additive',    label: 'Process Mat.', icon: 'flask-outline' },
+                { key: 'fish_scales', label: 'Fish Scales',       icon: 'fish-outline'  },
+                { key: 'additive',    label: 'Process Materials', icon: 'flask-outline' },
               ].map(t => {
                 const active = type === t.key;
                 return (
-                  <SpringButton key={t.key} onPress={() => setType(t.key)} style={{ flex: 1 }}>
-                    <LinearGradient
-                      colors={active ? [C.tealLight, C.ocean] : ['transparent', 'transparent']}
-                      start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-                      style={[styles.toggleBtn, active && styles.toggleBtnActive]}
-                    >
-                      <Ionicons name={t.icon} size={14} color={active ? '#fff' : C.slate} />
-                      <Text style={[styles.toggleText, active && styles.toggleTextActive]}>{t.label}</Text>
-                    </LinearGradient>
-                  </SpringButton>
+                  <TouchableOpacity key={t.key} onPress={() => setType(t.key)} style={[styles.toggleBtn, active && styles.toggleBtnActive]} activeOpacity={0.8}>
+                    <Ionicons name={t.icon} size={14} color={active ? '#fff' : C.slate} />
+                    <Text style={[styles.toggleText, active && styles.toggleTextActive]}>{t.label}</Text>
+                  </TouchableOpacity>
                 );
               })}
             </View>
@@ -110,9 +104,9 @@ const styles = StyleSheet.create({
     gap: 6, paddingVertical: 10, borderRadius: 10,
   },
   toggleBtnActive: {
-    shadowColor: C.ocean, shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25, shadowRadius: 6, elevation: 4,
+    backgroundColor: C.teal,
+    elevation: 4,
   },
-  toggleText:       { fontSize: 12, fontWeight: '600', color: C.slate },
-  toggleTextActive: { fontSize: 12, fontWeight: '800', color: '#fff'  },
+  toggleText:       { fontSize: 11, fontWeight: '700', color: C.slate, flexShrink: 1 },
+  toggleTextActive: { fontSize: 11, fontWeight: '800', color: '#fff' },
 });
