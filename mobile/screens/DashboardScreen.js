@@ -59,10 +59,14 @@ function Badge({ status }) {
 // Control button — no emojis, Ionicons
 function ControlBtn({ label, iconName, colors: gc, onPress, disabled }) {
   return (
-    <SpringButton onPress={onPress} disabled={disabled} style={styles.ctrlWrap}>
-      <LinearGradient colors={gc} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.ctrlBtn}>
-        <Ionicons name={iconName} size={22} color="#fff" />
-        <Text style={styles.ctrlLabel}>{label}</Text>
+    <SpringButton onPress={onPress} disabled={disabled} style={[styles.ctrlWrap, disabled && styles.ctrlWrapDisabled]}>
+      <LinearGradient
+        colors={disabled ? ['#C8D4D8', '#B0BEC5'] : gc}
+        start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+        style={[styles.ctrlBtn, disabled && styles.ctrlBtnDisabled]}
+      >
+        <Ionicons name={iconName} size={22} color={disabled ? '#8B9DAF' : '#fff'} />
+        <Text style={[styles.ctrlLabel, disabled && styles.ctrlLabelDisabled]}>{label}</Text>
       </LinearGradient>
     </SpringButton>
   );
@@ -376,9 +380,6 @@ function DashboardTab({ dashboardData, controlling, sendCommand, demoMode, setDe
                 Batch: {demoMode ? 'DEMO-001' : dashboardData.currentBatch}
               </Text>
             )}
-            {currentStageLabel && (
-              <Text style={styles.batchStage}>{currentStageLabel.toUpperCase()}</Text>
-            )}
           </View>
           {controlling && !demoMode && <ActivityIndicator color={C.teal} size="large" />}
         </View>
@@ -387,15 +388,12 @@ function DashboardTab({ dashboardData, controlling, sendCommand, demoMode, setDe
         {(isRunning || isPaused) && (
           <View style={styles.stageBox}>
             <View style={styles.stageHeader}>
-              <Text style={styles.stageTitle}>
-                {demoMode ? STAGES[stageIndex]?.label : currentStageLabel} 
-              </Text>
+              <Text style={styles.stageStep}>CURRENT STAGE</Text>
               <View style={styles.timerBadge}>
                 <Ionicons name="timer-outline" size={13} color={C.ocean} />
                 <Text style={styles.timerText}>{formatTime(timeLeft || dashboardData.timeLeft || 0)}</Text>
               </View>
             </View>
-            {/* Stage progress dots */}
             <View style={styles.stageDots}>
               {STAGES.map((s, i) => (
                 <View key={i} style={styles.stageDotItem}>
@@ -407,6 +405,21 @@ function DashboardTab({ dashboardData, controlling, sendCommand, demoMode, setDe
                   <Text style={[styles.stageDotLabel, i === stageIndex && { color: C.teal }]}>{s.label}</Text>
                 </View>
               ))}
+            </View>
+          </View>
+        )}
+
+        {isCleaning && (
+          <View style={styles.stageBox}>
+            <View style={styles.stageHeader}>
+              <View>
+                <Text style={styles.stageStep}>CLEANING MODE</Text>
+                <Text style={styles.stageTitle}>Automated Cleaning Sequence</Text>
+              </View>
+              <View style={styles.timerBadge}>
+                <Ionicons name="timer-outline" size={13} color={C.ocean} />
+                <Text style={styles.timerText}>{formatTime(timeLeft || 0)}</Text>
+              </View>
             </View>
           </View>
         )}
@@ -918,4 +931,18 @@ const styles = StyleSheet.create({
   },
   tempValue: { fontSize: 18, fontWeight: '900', color: C.deep },
   tempLabel: { fontSize: 10, fontWeight: '700', color: C.steel, textTransform: 'uppercase', letterSpacing: 0.4 },
+  ctrlWrapDisabled: {
+    shadowOpacity: 0.15,
+    elevation: 2,
+  },
+  ctrlBtnDisabled: {
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  ctrlLabelDisabled: {
+    color: '#8B9DAF',
+  },
+  stageStep: {
+    fontSize: 9, fontWeight: '800', color: C.steel,
+    letterSpacing: 0.8, marginBottom: 3, textTransform: 'uppercase',
+  },
 });
