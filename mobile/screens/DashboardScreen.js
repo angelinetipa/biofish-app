@@ -235,33 +235,17 @@ function DashboardTab({ dashboardData, controlling, sendCommand }) {
     );
     return (
       <>
-        {/* Start — visible when idle */}
-        {status === 'idle' && (
-          <ControlBtn label="Start" iconName="play" colors={['#43C6AC', '#2A7A6B']} onPress={() => sendCommand('start')} disabled={controlling} />
-        )}
-        {/* Pause — visible when running */}
-        {status === 'running' && (
-          <ControlBtn label="Pause" iconName="pause" colors={['#E8A020', '#B36B00']} onPress={() => sendCommand('pause')} disabled={controlling} />
-        )}
-        {/* Continue — visible when paused */}
-        {status === 'paused' && (
-          <ControlBtn label="Continue" iconName="play-forward" colors={['#43C6AC', '#2A7A6B']} onPress={() => sendCommand('continue')} disabled={controlling} />
-        )}
-        {/* Stop — visible when running or paused */}
-        {(status === 'running' || status === 'paused') && (
-          <ControlBtn label="Stop" iconName="stop" colors={['#C05040', '#8B2020']} onPress={() => sendCommand('stop')} disabled={controlling} />
-        )}
-        {/* Cleaning — visible when idle */}
-        {status === 'idle' && (
-          <ControlBtn label="Cleaning" iconName="water" colors={['#5B9BD5', '#2E6DA4']} onPress={() => sendCommand('cleaning')} disabled={controlling} />
-        )}
+        {status === 'idle' && <ControlBtn label="Start" iconName="play" colors={['#43C6AC', '#2A7A6B']} onPress={() => sendCommand('start')} disabled={controlling} />}
+        {status === 'running' && <ControlBtn label="Pause" iconName="pause" colors={['#E8A020', '#B36B00']} onPress={() => sendCommand('pause')} disabled={controlling} />}
+        {status === 'paused' && <ControlBtn label="Continue" iconName="play-forward" colors={['#43C6AC', '#2A7A6B']} onPress={() => sendCommand('continue')} disabled={controlling} />}
+        {(status === 'running' || status === 'paused') && <ControlBtn label="Stop" iconName="stop" colors={['#C05040', '#8B2020']} onPress={() => sendCommand('stop')} disabled={controlling} />}
+        {status === 'idle' && <ControlBtn label="Cleaning" iconName="water" colors={['#5B9BD5', '#2E6DA4']} onPress={() => sendCommand('cleaning')} disabled={controlling} />}
       </>
     );
   };
 
   return (
-    <>
-      {/* Machine status */}
+    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 14, paddingBottom: 16 }}>
       <Card style={styles.statusCard}>
         <CardAccent />
         <View style={styles.statusRow}>
@@ -272,16 +256,13 @@ function DashboardTab({ dashboardData, controlling, sendCommand }) {
               <Text style={[styles.statusValue, { color: statusColor }]}>{status.toUpperCase()}</Text>
             </View>
             {dashboardData.currentBatch && <Text style={styles.batchCode}>Batch: {dashboardData.currentBatch}</Text>}
-            {dashboardData.currentStage && (
-              <Text style={styles.batchStage}>{dashboardData.currentStage.replace(/_/g, ' ').toUpperCase()}</Text>
-            )}
+            {dashboardData.currentStage && <Text style={styles.batchStage}>{dashboardData.currentStage.replace(/_/g, ' ').toUpperCase()}</Text>}
           </View>
           {controlling && <ActivityIndicator color={C.teal} size="large" />}
         </View>
         <View style={styles.ctrlRow}>{controls()}</View>
       </Card>
 
-      {/* Metrics */}
       <View style={styles.metricsGrid}>
         {[
           { icon: 'layers',         label: 'Batches',   value: dashboardData.totalBatches },
@@ -296,34 +277,38 @@ function DashboardTab({ dashboardData, controlling, sendCommand }) {
           </Card>
         ))}
       </View>
-    </>
+    </ScrollView>
   );
 }
 
 function BatchesTab({ batches }) {
   return (
-    <Card>
+    <Card style={styles.tabCard}>
       <View style={styles.tabContentPad}>
         <Text style={styles.sectionTitle}>Recent Batches</Text>
-        {batches.length === 0
-          ? <Text style={styles.emptyText}>No batches yet</Text>
-          : batches.map((b, i) => (
-            <View key={i} style={styles.listRow}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.listTitle}>{b.batch_code}</Text>
-                <Text style={styles.listSub}>{b.current_stage || b.stage} · {b.start_time || b.date}</Text>
-              </View>
-              <Badge status={b.status} />
-            </View>
-          ))}
       </View>
+      <ScrollView style={styles.tabScroll} showsVerticalScrollIndicator={false}>
+        <View style={styles.tabScrollInner}>
+          {batches.length === 0
+            ? <Text style={styles.emptyText}>No batches yet</Text>
+            : batches.map((b, i) => (
+              <View key={i} style={styles.listRow}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.listTitle}>{b.batch_code}</Text>
+                  <Text style={styles.listSub}>{b.current_stage || b.stage} · {b.start_time || b.date}</Text>
+                </View>
+                <Badge status={b.status} />
+              </View>
+            ))}
+        </View>
+      </ScrollView>
     </Card>
   );
 }
 
 function InventoryTab({ materials, onAdd }) {
   return (
-    <Card>
+    <Card style={styles.tabCard}>
       <View style={styles.tabContentPad}>
         <View style={styles.tabTitleRow}>
           <Text style={styles.sectionTitle}>Inventory</Text>
@@ -334,25 +319,29 @@ function InventoryTab({ materials, onAdd }) {
             </LinearGradient>
           </SpringButton>
         </View>
-        {materials.length === 0
-          ? <Text style={styles.emptyText}>No materials yet</Text>
-          : materials.map((m, i) => (
-            <View key={i} style={styles.listRow}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.listTitle}>{m.name || m.fish_scale_type || m.additive_name}</Text>
-                <Text style={styles.listSub}>{m.quantity}{m.unit ? ` ${m.unit}` : m.quantity_kg ? ` kg` : ` mL`}</Text>
-              </View>
-              <Badge status={m.status} />
-            </View>
-          ))}
       </View>
+      <ScrollView style={styles.tabScroll} showsVerticalScrollIndicator={false}>
+        <View style={styles.tabScrollInner}>
+          {materials.length === 0
+            ? <Text style={styles.emptyText}>No materials yet</Text>
+            : materials.map((m, i) => (
+              <View key={i} style={styles.listRow}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.listTitle}>{m.name || m.fish_scale_type || m.additive_name}</Text>
+                  <Text style={styles.listSub}>{m.quantity}{m.unit ? ` ${m.unit}` : m.quantity_kg ? ` kg` : ` mL`}</Text>
+                </View>
+                <Badge status={m.status} />
+              </View>
+            ))}
+        </View>
+      </ScrollView>
     </Card>
   );
 }
 
 function FeedbackTab({ feedback, onAdd }) {
   return (
-    <Card>
+    <Card style={styles.tabCard}>
       <View style={styles.tabContentPad}>
         <View style={styles.tabTitleRow}>
           <Text style={styles.sectionTitle}>Feedback</Text>
@@ -363,23 +352,27 @@ function FeedbackTab({ feedback, onAdd }) {
             </LinearGradient>
           </SpringButton>
         </View>
-        {feedback.length === 0
-          ? <Text style={styles.emptyText}>No feedback yet</Text>
-          : feedback.map((f, i) => (
-            <View key={i} style={styles.listRow}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.listTitle}>{f.batch_code}</Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
-                  {Array.from({ length: 5 }).map((_, s) => (
-                    <Ionicons key={s} name={s < f.rating ? 'star' : 'star-outline'} size={12} color={s < f.rating ? '#F0A04B' : C.cloud} />
-                  ))}
-                  <Text style={styles.listSub}> · {f.date}</Text>
-                </View>
-                {f.comments && <Text style={styles.listComment} numberOfLines={2}>{f.comments}</Text>}
-              </View>
-            </View>
-          ))}
       </View>
+      <ScrollView style={styles.tabScroll} showsVerticalScrollIndicator={false}>
+        <View style={styles.tabScrollInner}>
+          {feedback.length === 0
+            ? <Text style={styles.emptyText}>No feedback yet</Text>
+            : feedback.map((f, i) => (
+              <View key={i} style={styles.listRow}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.listTitle}>{f.batch_code}</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
+                    {Array.from({ length: 5 }).map((_, s) => (
+                      <Ionicons key={s} name={s < f.rating ? 'star' : 'star-outline'} size={12} color={s < f.rating ? '#F0A04B' : C.cloud} />
+                    ))}
+                    <Text style={styles.listSub}> · {f.date}</Text>
+                  </View>
+                  {f.comments && <Text style={styles.listComment} numberOfLines={2}>{f.comments}</Text>}
+                </View>
+              </View>
+            ))}
+        </View>
+      </ScrollView>
     </Card>
   );
 }
@@ -456,15 +449,9 @@ export default function DashboardScreen({
       </View>
 
       {/* Content */}
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#fff" />}
-      >
+      <View style={styles.tabContainer}>
         {renderContent()}
-        <View style={{ height: 20 }} />
-      </ScrollView>
+      </View>
 
       {/* Bottom tab bar */}
       <View style={styles.tabBar}>
@@ -639,4 +626,20 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.25)',
   },
   modalSubmitText: { color: '#fff', fontSize: 14, fontWeight: '700', letterSpacing: 0.4 },
+  tabContainer: {
+    flex: 1,
+    padding: 16,
+    paddingBottom: 0,
+  },
+  tabCard: {
+    flex: 1,
+    marginBottom: 16,
+  },
+  tabScroll: {
+    flex: 1,
+  },
+  tabScrollInner: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+  },
 });
