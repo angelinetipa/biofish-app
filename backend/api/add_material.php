@@ -8,8 +8,9 @@ if ($data['item_type'] === 'fish_scales') {
     $status = $data['quantity_kg'] >= 1 ? 'available' : 'low_stock';
     $stmt->bind_param("ssdss", $data['fish_scale_type'], $data['source_location'], $data['quantity_kg'], $data['date_collected'], $status);
 } else {
-    $stmt = $db->prepare("INSERT INTO additives (additive_name, quantity_ml, minimum_level, last_restocked) VALUES (?,?,?,CURDATE())");
-    $stmt->bind_param("sdd", $data['additive_name'], $data['quantity_ml'], $data['minimum_level']);
+    $last = $data['last_restocked'] ?? date('Y-m-d');
+    $stmt = $db->prepare("INSERT INTO additives (additive_name, quantity_ml, minimum_level, last_restocked) VALUES (?,?,?,?)");
+    $stmt->bind_param("sdds", $data['additive_name'], $data['quantity_ml'], $data['minimum_level'], $last);
 }
 $ok = $stmt->execute();
 echo json_encode(['success' => $ok, 'message' => $ok ? 'Added' : $db->error]);

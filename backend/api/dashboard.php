@@ -50,14 +50,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         echo json_encode(['success' => true, 'data' => $batches]);
     }
     elseif ($type === 'materials') {
-        $result = $db->query("SELECT fish_scale_type, quantity_kg, status, source_location, DATE_FORMAT(date_collected, '%Y-%m-%d') as date_collected FROM materials ORDER BY date_collected DESC LIMIT 10");
-        
-        $materials = [];
-        while ($row = $result->fetch_assoc()) {
-            $materials[] = $row;
-        }
-        
-        echo json_encode(['success' => true, 'data' => $materials]);
+        $fish = $db->query("SELECT material_id, fish_scale_type, source_location, quantity_kg, date_collected, status FROM materials WHERE material_type='fish_scales' ORDER BY date_collected DESC");
+        $fishData = [];
+        while ($r = $fish->fetch_assoc()) $fishData[] = $r;
+
+        $additives = $db->query("SELECT additive_id, additive_name, quantity_ml, minimum_level, last_restocked, created_at FROM additives ORDER BY additive_name");
+        $addData = [];
+        while ($r = $additives->fetch_assoc()) $addData[] = $r;
+
+        echo json_encode(['success' => true, 'fish_scales' => $fishData, 'additives' => $addData]);
     }
     elseif ($type === 'feedback') {
         $result = $db->query("SELECT f.rating, f.comments, b.batch_code, DATE_FORMAT(f.created_at, '%Y-%m-%d') as date FROM feedback f LEFT JOIN batches b ON f.batch_id = b.batch_id ORDER BY f.created_at DESC LIMIT 10");

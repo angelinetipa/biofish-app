@@ -23,7 +23,7 @@ const TABS = [
 ];
 
 export default function DashboardScreen({
-  dashboardData, batches, materials, feedback,
+  dashboardData, batches, fishScales, additives, feedback,
   activeTab, setActiveTab, refreshing, onRefresh, onLogout, onDashboardUpdate,
 }) {
   const [controlling,       setControlling]       = useState(false);
@@ -62,7 +62,7 @@ export default function DashboardScreen({
     switch (activeTab) {
       case 'dashboard': return <DashboardTab dashboardData={dashboardData} controlling={controlling} sendCommand={sendCommand} {...demo} />;
       case 'batches':   return <BatchesTab   batches={batches}   />;
-      case 'inventory': return <InventoryTab materials={materials} onAdd={() => setShowAddInventory(true)} />;
+      case 'inventory': return <InventoryTab fishScales={fishScales} additives={additives} onAdd={() => setShowAddInventory(true)} />;
       case 'feedback':  return <FeedbackTab  feedback={feedback}  onAdd={() => setShowAddFeedback(true)}  />;
     }
   };

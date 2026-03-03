@@ -21,7 +21,8 @@ export default function App() {
     totalBatches: 0, successRate: 0, avgTime: 0, lowStock: 0,
   });
   const [batches, setBatches] = useState([]);
-  const [materials, setMaterials] = useState([]);
+  const [fishScales, setFishScales] = useState([]);
+  const [additives, setAdditives]   = useState([]);
   const [feedback, setFeedback] = useState([]);
 
   const loadDashboard = async () => {
@@ -34,7 +35,8 @@ export default function App() {
       ]);
       if (statusRes.data.success) setDashboardData(statusRes.data.data);
       if (batchesRes.data.success) setBatches(batchesRes.data.data);
-      if (materialsRes.data.success) setMaterials(materialsRes.data.data);
+      setFishScales(materialsRes.data.fish_scales || []);
+      setAdditives(materialsRes.data.additives || []);
       if (feedbackRes.data.success) setFeedback(feedbackRes.data.data);
     } catch (e) {
       console.log('Dashboard load error:', e);
@@ -93,7 +95,8 @@ export default function App() {
     <DashboardScreen
       onDashboardUpdate={loadDashboard}
       dashboardData={dashboardData} batches={batches}
-      materials={materials} feedback={feedback}
+      fishScales={fishScales}
+      additives={additives} feedback={feedback}
       activeTab={activeTab} setActiveTab={setActiveTab}
       refreshing={refreshing} onRefresh={onRefresh}
       onLogout={handleLogout}
