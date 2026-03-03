@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
   StyleSheet, Text, View, ScrollView, RefreshControl,
   Alert, ActivityIndicator, Platform, TextInput,
-  KeyboardAvoidingView, Modal, TouchableOpacity
+  KeyboardAvoidingView, Modal, TouchableOpacity, StatusBar
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -440,7 +440,7 @@ export default function DashboardScreen({
 
   return (
     <LinearGradient colors={['#4ECDC4', '#3A7CA5', '#2C6B7F']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.container}>
-
+      <StatusBar translucent backgroundColor="transparent" barStyle="dark-content" />
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
@@ -494,7 +494,7 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
 
   header: {
-    paddingTop: Platform.OS === 'ios' ? 56 : 40,
+    paddingTop: Platform.OS === 'ios' ? 56 : (StatusBar.currentHeight || 24) + 12,
     paddingBottom: 14, paddingHorizontal: 20,
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     backgroundColor: 'rgba(248,250,251,0.97)',
