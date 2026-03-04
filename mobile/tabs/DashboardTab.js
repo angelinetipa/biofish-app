@@ -21,7 +21,10 @@ export default function DashboardTab({ dashboardData, controlling, sendCommand, 
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 14, paddingBottom: 16 }}>
 
       {/* Demo toggle */}
-      <SpringButton onPress={() => setDemoMode(d => !d)}>
+      <SpringButton onPress={() => {
+        if (demoMode && demoStatus !== 'idle') demoCommand('stop');
+        setDemoMode(d => !d);
+      }}>
         <View style={[styles.demoToggle, demoMode && styles.demoToggleActive]}>
           <Ionicons name={demoMode ? 'flask' : 'flask-outline'} size={15} color={demoMode ? C.teal : C.slate} />
           <Text style={[styles.demoToggleText, demoMode && { color: C.teal }]}>

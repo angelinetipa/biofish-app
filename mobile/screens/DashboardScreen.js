@@ -32,11 +32,27 @@ export default function DashboardScreen({
   const [showAddFeedback,   setShowAddFeedback]   = useState(false);
   const [showStartBatch, setShowStartBatch] = useState(false);
 
-  const demo = useDemoMachine();
+  const demo = useDemoMachine(onDashboardUpdate);
 
   const sendCommand = (command) => {
     if (command === 'start') {
-      setShowStartBatch(true);
+      if (demo.demoMode) {
+        setShowStartBatch(true);
+      } else {
+        Alert.alert(
+          'Pre-Start Checklist',
+          'Before starting, please ensure:\n\n' +
+          '🐟  Fish scales are loaded into the funnel\n' +
+          '💧  Water tank is filled to the required level\n' +
+          '🧪  Glycerol container is filled and connected\n' +
+          '🔌  Machine is powered on and all connections are secure\n\n' +
+          'Proceed only when everything is ready.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Start Machine', onPress: () => executeCommand('start') }
+          ]
+        );
+      }
       return;
     }
     const confirm = {
@@ -125,7 +141,15 @@ export default function DashboardScreen({
 
       <AddInventoryModal visible={showAddInventory} onClose={() => setShowAddInventory(false)} onSuccess={onDashboardUpdate} />
       <AddFeedbackModal  visible={showAddFeedback}  onClose={() => setShowAddFeedback(false)}  onSuccess={onDashboardUpdate} />
-      <StartBatchModal visible={showStartBatch}  onClose={() => setShowStartBatch(false)} onSuccess={() => { onDashboardUpdate?.(); setShowStartBatch(false); }}/>
+      <StartBatchModal
+        visible={showStartBatch}
+        onClose={() => setShowStartBatch(false)}
+        onSuccess={(batch_id) => {
+          if (demo.demoMode && batch_id) demo.demoCommand('start', batch_id);
+          onDashboardUpdate?.();
+          setShowStartBatch(false);
+        }}
+      />
     </LinearGradient>
   );
 }

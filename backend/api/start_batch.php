@@ -60,7 +60,7 @@ try {
     $db->query("UPDATE batches SET machine_status='running' WHERE batch_id=$batch_id");
 
     $db->commit();
-    echo json_encode(['success'=>true,'message'=>'Batch started!','batch_code'=>$data['batch_code']]);
+    echo json_encode(['success'=>true,'message'=>'Batch started!','batch_code'=>$data['batch_code'],'batch_id'=>$batch_id]);
 } catch (Exception $e) {
     $db->rollback();
     echo json_encode(['success'=>false,'message'=>$e->getMessage()]);

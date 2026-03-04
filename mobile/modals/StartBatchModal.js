@@ -8,7 +8,7 @@ import SpringButton from '../components/SpringButton';
 import { C, S } from '../constants/theme';
 import { API_URL } from '../constants/api';
 
-export default function StartBatchModal({ visible, onClose, onSuccess }) {
+export default function StartBatchModal({ visible, onClose, onSuccess, demoMode, demoCommand }) {
   const [loading,    setLoading]    = useState(false);
   const [fetching,   setFetching]   = useState(false);
   const [batchCode,  setBatchCode]  = useState('');
@@ -22,21 +22,30 @@ export default function StartBatchModal({ visible, onClose, onSuccess }) {
   }, [visible]);
 
   const loadFormData = async () => {
+    if (demoMode) {
+        // In demo mode: use fake data, no DB check
+        setBatchCode('DEMO-' + Date.now().toString().slice(-4));
+        setMaterials([{ material_id: 1, fish_scale_type: 'Tilapia', quantity_kg: 10 }]);
+        setAdditives([{ additive_id: 1, additive_name: 'Glycerol', quantity_ml: 500 }]);
+        setSelMats({});
+        setSelAdds({});
+        return;
+    }
     setFetching(true);
     try {
-      const res = await axios.get(`${API_URL}/get_batch_form_data.php`);
-      if (res.data.busy) {
+        const res = await axios.get(`${API_URL}/get_batch_form_data.php`);
+        if (res.data.busy) {
         Alert.alert('Machine Busy', 'A batch is already running or paused.');
         onClose(); return;
-      }
-      setBatchCode(res.data.batch_code);
-      setMaterials(res.data.materials);
-      setAdditives(res.data.additives);
-      setSelMats({});
-      setSelAdds({});
+        }
+        setBatchCode(res.data.batch_code);
+        setMaterials(res.data.materials);
+        setAdditives(res.data.additives);
+        setSelMats({});
+        setSelAdds({});
     } catch { Alert.alert('Error', 'Could not load form data.'); onClose(); }
     finally { setFetching(false); }
-  };
+};
 
   const toggleMat = (id) => {
     setSelMats(p => {
@@ -63,6 +72,12 @@ export default function StartBatchModal({ visible, onClose, onSuccess }) {
     if (selectedMats.length === 0) return Alert.alert('Error', 'Select at least one fish scale material with quantity.');
     if (selectedAdds.length === 0) return Alert.alert('Error', 'Select at least one process material with quantity.');
 
+    if (demoMode) {
+        demoCommand('start');
+        onSuccess?.();
+        onClose();
+        return;
+    }
     setLoading(true);
     try {
       const payload = {
@@ -70,14 +85,14 @@ export default function StartBatchModal({ visible, onClose, onSuccess }) {
         materials: selectedMats.map(([id, qty]) => ({ material_id: parseInt(id), quantity_used: parseFloat(qty) })),
         additives: selectedAdds.map(([id, qty]) => ({ additive_id: parseInt(id), quantity_used: parseFloat(qty) })),
       };
-      const res = await axios.post(`${API_URL}/start_batch.php`, payload);
-      if (res.data.success) {
+    const res = await axios.post(`${API_URL}/start_batch.php`, payload);
+    if (res.data.success) {
         Alert.alert('Started!', `${res.data.batch_code} is now running.`);
-        onSuccess?.();
+        onSuccess?.(res.data.batch_id); // ← pass up
         onClose();
-      } else {
+    } else {
         Alert.alert('Error', res.data.message);
-      }
+    }
     } catch { Alert.alert('Error', 'Could not start batch. Check connection.'); }
     finally { setLoading(false); }
   };
