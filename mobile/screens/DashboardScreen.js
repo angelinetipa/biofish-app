@@ -156,7 +156,7 @@ export default function DashboardScreen({
                   onDashboardUpdate?.();
                 } else {
                   if (batch_id) {
-                    axios.post(`${API_URL}/demo_control.php`, { action: 'stop', batch_id })
+                    axios.post(`${API_URL}/demo_control.php`, { action: 'rollback', batch_id })
                       .finally(() => onDashboardUpdate?.());
                   } else {
                     onDashboardUpdate?.();
@@ -166,7 +166,7 @@ export default function DashboardScreen({
               })
               .catch(() => {
                 if (batch_id) {
-                  axios.post(`${API_URL}/demo_control.php`, { action: 'stop', batch_id })
+                  axios.post(`${API_URL}/demo_control.php`, { action: 'rollback', batch_id })
                     .finally(() => {
                       onDashboardUpdate?.(); // ← moved inside, fires AFTER rollback
                     });

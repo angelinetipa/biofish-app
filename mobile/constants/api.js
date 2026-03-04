@@ -1,1 +1,1 @@
-export const API_URL = 'http://192.168.1.47/biofish-backend/api'; // CHANGE THIS
+export const API_URL = 'http://10.148.45.44/biofish-backend/api'; // CHANGE THIS

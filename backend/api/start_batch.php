@@ -39,6 +39,14 @@ try {
         $upd->execute();
     }
 
+    foreach ($data['materials'] as $m) {
+        $qty = floatval($m['quantity_used']);
+        if ($qty <= 0) continue;
+        $ins2 = $db->prepare("INSERT INTO batch_materials (batch_id, material_id, quantity_used) VALUES (?, ?, ?)");
+        $ins2->bind_param("iid", $batch_id, $m['material_id'], $qty);
+        $ins2->execute();
+    }
+
     // Insert additives + deduct stock
     foreach ($data['additives'] as $a) {
         $qty = floatval($a['quantity_used']);
