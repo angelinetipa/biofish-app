@@ -14,6 +14,7 @@ import AddInventoryModal from '../modals/AddInventoryModal';
 import AddFeedbackModal  from '../modals/AddFeedbackModal';
 import { C } from '../constants/theme';
 import { API_URL } from '../constants/api';
+import StartBatchModal from '../modals/StartBatchModal';
 
 const TABS = [
   { key: 'dashboard', label: 'Dashboard', icon: 'home-outline',       iconActive: 'home'        },
@@ -29,10 +30,15 @@ export default function DashboardScreen({
   const [controlling,       setControlling]       = useState(false);
   const [showAddInventory,  setShowAddInventory]  = useState(false);
   const [showAddFeedback,   setShowAddFeedback]   = useState(false);
+  const [showStartBatch, setShowStartBatch] = useState(false);
 
   const demo = useDemoMachine();
 
   const sendCommand = (command) => {
+    if (command === 'start') {
+      setShowStartBatch(true);
+      return;
+    }
     const confirm = {
       stop:     { title: 'Stop Machine',   msg: 'This will terminate the current batch. It cannot be resumed.', btn: 'Stop'  },
       cleaning: { title: 'Start Cleaning', msg: 'Make sure the machine is empty before proceeding.',            btn: 'Start' },
@@ -119,6 +125,7 @@ export default function DashboardScreen({
 
       <AddInventoryModal visible={showAddInventory} onClose={() => setShowAddInventory(false)} onSuccess={onDashboardUpdate} />
       <AddFeedbackModal  visible={showAddFeedback}  onClose={() => setShowAddFeedback(false)}  onSuccess={onDashboardUpdate} />
+      <StartBatchModal visible={showStartBatch}  onClose={() => setShowStartBatch(false)} onSuccess={() => { onDashboardUpdate?.(); setShowStartBatch(false); }}/>
     </LinearGradient>
   );
 }

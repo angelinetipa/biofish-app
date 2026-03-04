@@ -8,7 +8,14 @@ import { C, S } from '../constants/theme';
 
 export default function DashboardTab({ dashboardData, controlling, sendCommand, demoMode, setDemoMode, demoStatus, demoCommand, stageIndex, timeLeft, temps }) {
 
-  const handleCommand = (cmd) => demoMode ? demoCommand(cmd) : sendCommand(cmd);
+  const handleCommand = (cmd) => {
+    if (cmd === 'start') {
+      sendCommand('start'); // always open the modal for start
+      return;
+    }
+    if (demoMode) demoCommand(cmd);
+    else sendCommand(cmd);
+  };
 
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 14, paddingBottom: 16 }}>
