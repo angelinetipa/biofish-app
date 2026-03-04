@@ -61,13 +61,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         echo json_encode(['success' => true, 'fish_scales' => $fishData, 'additives' => $addData]);
     }
     elseif ($type === 'feedback') {
-        $result = $db->query("SELECT f.rating, f.comments, b.batch_code, DATE_FORMAT(f.created_at, '%Y-%m-%d') as date FROM feedback f LEFT JOIN batches b ON f.batch_id = b.batch_id ORDER BY f.created_at DESC LIMIT 10");
-        
+        $result = $db->query("SELECT f.feedback_id, f.rating, f.user_name, f.comments, f.bug_report, f.feature_request, b.batch_code, DATE_FORMAT(f.submitted_at, '%Y-%m-%d') as date FROM feedback f LEFT JOIN batches b ON f.batch_id = b.batch_id ORDER BY f.submitted_at DESC LIMIT 20");
         $feedback = [];
-        while ($row = $result->fetch_assoc()) {
-            $feedback[] = $row;
-        }
-        
+        while ($row = $result->fetch_assoc()) $feedback[] = $row;
         echo json_encode(['success' => true, 'data' => $feedback]);
     }
     
