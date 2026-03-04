@@ -49,7 +49,7 @@ export default function DashboardScreen({
           'Proceed only when everything is ready.',
           [
             { text: 'Cancel', style: 'cancel' },
-            { text: 'Start Machine', onPress: () => executeCommand('start') }
+            { text: 'Start Machine', onPress: () => setShowStartBatch(true) }
           ]
         );
       }
@@ -145,8 +145,38 @@ export default function DashboardScreen({
         visible={showStartBatch}
         onClose={() => setShowStartBatch(false)}
         onSuccess={(batch_id) => {
-          if (demo.demoMode && batch_id) demo.demoCommand('start', batch_id);
-          onDashboardUpdate?.();
+          if (demo.demoMode && batch_id) {
+            demo.demoCommand('start', batch_id);
+            onDashboardUpdate?.();
+          } else {
+            setControlling(true);
+            axios.post(`${API_URL}/control.php`, { command: 'start' })
+              .then(res => {
+                if (res.data.success) {
+                  onDashboardUpdate?.();
+                } else {
+                  if (batch_id) {
+                    axios.post(`${API_URL}/demo_control.php`, { action: 'stop', batch_id })
+                      .finally(() => onDashboardUpdate?.());
+                  } else {
+                    onDashboardUpdate?.();
+                  }
+                  Alert.alert('Error', res.data.message || 'Command failed');
+                }
+              })
+              .catch(() => {
+                if (batch_id) {
+                  axios.post(`${API_URL}/demo_control.php`, { action: 'stop', batch_id })
+                    .finally(() => {
+                      onDashboardUpdate?.(); // ← moved inside, fires AFTER rollback
+                    });
+                } else {
+                  onDashboardUpdate?.();
+                }
+                Alert.alert('Error', 'Could not reach machine.');
+              })
+              .finally(() => setControlling(false));
+          }
           setShowStartBatch(false);
         }}
       />
