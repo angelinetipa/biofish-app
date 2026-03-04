@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { StyleSheet, Text, View, Platform, StatusBar, Alert } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { StyleSheet, Text, View, Platform, StatusBar, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
@@ -15,12 +15,14 @@ import AddFeedbackModal  from '../modals/AddFeedbackModal';
 import { C } from '../constants/theme';
 import { API_URL } from '../constants/api';
 import StartBatchModal from '../modals/StartBatchModal';
+import GameTab from '../tabs/GameTab';
 
 const TABS = [
   { key: 'dashboard', label: 'Dashboard', icon: 'home-outline',       iconActive: 'home'        },
   { key: 'batches',   label: 'Batches',   icon: 'list-outline',       iconActive: 'list'        },
   { key: 'inventory', label: 'Inventory', icon: 'layers-outline',     iconActive: 'layers'      },
   { key: 'feedback',  label: 'Feedback',  icon: 'chatbubble-outline', iconActive: 'chatbubble'  },
+  { key: 'game',      label: 'Game',      icon: 'game-controller-outline', iconActive: 'game-controller' },
 ];
 
 export default function DashboardScreen({
@@ -33,6 +35,38 @@ export default function DashboardScreen({
   const [showStartBatch, setShowStartBatch] = useState(false);
 
   const demo = useDemoMachine(onDashboardUpdate);
+
+  const bx = useRef(Array.from({ length: 4 }, () => new Animated.Value(0))).current;
+  const by = useRef(Array.from({ length: 4 }, () => new Animated.Value(0))).current;
+
+  const bubbleConfigs = [
+    { toX: 55,  toY: -40, delay: 0,     dur: 10000 },
+    { toX: -45, toY: 35,  delay: 2000,  dur: 11000 },
+    { toX: 35,  toY: 45,  delay: 1000,  dur: 9000  },
+    { toX: -40, toY: -35, delay: 3000,  dur: 12000 },
+  ];
+
+  useEffect(() => {
+    bubbleConfigs.forEach(({ toX, toY, delay, dur }, i) => {
+      const d = dur / 3;
+      setTimeout(() => {
+        Animated.loop(Animated.sequence([
+          Animated.parallel([
+            Animated.timing(bx[i], { toValue: toX,          duration: d, useNativeDriver: true }),
+            Animated.timing(by[i], { toValue: toY,          duration: d, useNativeDriver: true }),
+          ]),
+          Animated.parallel([
+            Animated.timing(bx[i], { toValue: -toX * 0.75, duration: d, useNativeDriver: true }),
+            Animated.timing(by[i], { toValue: toY * 0.6,   duration: d, useNativeDriver: true }),
+          ]),
+          Animated.parallel([
+            Animated.timing(bx[i], { toValue: 0, duration: d, useNativeDriver: true }),
+            Animated.timing(by[i], { toValue: 0, duration: d, useNativeDriver: true }),
+          ]),
+        ])).start();
+      }, delay);
+    });
+  }, []);
 
   const sendCommand = (command) => {
     if (command === 'start') {
@@ -86,6 +120,7 @@ export default function DashboardScreen({
       case 'batches':   return <BatchesTab   batches={batches}   />;
       case 'inventory': return <InventoryTab fishScales={fishScales} additives={additives} onAdd={() => setShowAddInventory(true)} onRefresh={onDashboardUpdate} />;
       case 'feedback':  return <FeedbackTab  feedback={feedback}  onAdd={() => setShowAddFeedback(true)}  />;
+      case 'game':      return <GameTab />;
     }
   };
 
@@ -100,9 +135,14 @@ export default function DashboardScreen({
         { w: 150, h: 150, r: 75,  top: '30%', right: -40 },
         { w: 100, h: 100, r: 50,  top: '55%', left: 10   },
       ].map((b, i) => (
-        <View key={i} style={{ position: 'absolute', width: b.w, height: b.h, borderRadius: b.r, top: b.top, bottom: b.bottom, left: b.left, right: b.right, backgroundColor: 'rgba(255,255,255,0.08)', borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.25)', shadowColor: '#ffffff', shadowOffset: { width: -6, height: -6 }, shadowOpacity: 0.45, shadowRadius: 18 }} />
+        <Animated.View key={i} style={{
+          position: 'absolute', width: b.w, height: b.h, borderRadius: b.r,
+          top: b.top, bottom: b.bottom, left: b.left, right: b.right,
+          backgroundColor: 'rgba(255,255,255,0.08)',
+          borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.25)',
+          transform: [{ translateX: bx[i] }, { translateY: by[i] }],
+        }} />
       ))}
-
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
