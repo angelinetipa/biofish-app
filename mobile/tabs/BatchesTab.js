@@ -16,10 +16,31 @@ export default function BatchesTab({ batches }) {
   const [expanded, setExpanded] = useState(null);
   const toggle = (i) => setExpanded(p => p === i ? null : i);
 
+  const total     = batches.length;
+  const completed = batches.filter(b => b.status === 'completed').length;
+  const stopped   = batches.filter(b => b.status === 'stopped').length;
+  const running   = batches.filter(b => ['running','paused'].includes(b.status)).length;
+
   return (
     <Card style={S.tabCard}>
       <View style={S.tabContentPad}>
         <Text style={S.sectionTitle}>Batches</Text>
+        {total > 0 && (
+          <View style={styles.statsRow}>
+            {[
+              { icon: 'layers',        label: 'Total',     value: total,     color: C.ocean   },
+              { icon: 'checkmark-done',label: 'Completed', value: completed, color: C.success },
+              { icon: 'stop-circle',   label: 'Stopped',   value: stopped,   color: C.error   },
+              { icon: 'play-circle',   label: 'Active',    value: running,   color: C.teal    },
+            ].map((s, i) => (
+              <View key={i} style={styles.statCard}>
+                <Ionicons name={s.icon} size={16} color={s.color} />
+                <Text style={[styles.statValue, { color: s.color }]}>{s.value}</Text>
+                <Text style={styles.statLabel}>{s.label}</Text>
+              </View>
+            ))}
+          </View>
+        )}
       </View>
       <ScrollView style={S.tabScroll} showsVerticalScrollIndicator={false}>
         <View style={S.tabScrollInner}>
@@ -78,4 +99,8 @@ const styles = StyleSheet.create({
   detailRow:      { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 7 },
   detailLabel:    { fontSize: 11, fontWeight: '600', color: C.steel, width: 110 },
   detailValue:    { fontSize: 12, fontWeight: '700', color: C.charcoal, flex: 1 },
+  statsRow: { flexDirection: 'row', gap: 8, marginTop: 10 },
+  statCard:  { flex: 1, alignItems: 'center', backgroundColor: 'rgba(237,242,244,0.8)', borderRadius: 12, paddingVertical: 10, gap: 3, borderWidth: 1, borderColor: 'rgba(255,255,255,0.9)' },
+  statValue: { fontSize: 16, fontWeight: '900' },
+  statLabel: { fontSize: 9, fontWeight: '700', color: C.steel, textTransform: 'uppercase', letterSpacing: 0.3 },
 });
