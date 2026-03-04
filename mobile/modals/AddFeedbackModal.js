@@ -14,9 +14,17 @@ const shortCode = (code) => {
   return parts.length >= 3 ? '#' + parts[parts.length - 1] : code;
 };
 
+const shortBatch = (code) => {
+  if (!code) return '—';
+  if (code.toUpperCase().includes('CLEAN')) return 'CLEAN-' + code.split('-').pop();
+  const parts = code.split('-');
+  return 'BATCH-' + parts[parts.length - 1];
+};
+
 export default function AddFeedbackModal({ visible, onClose, onSuccess }) {
   const [loading,  setLoading]  = useState(false);
   const [batches,  setBatches]  = useState([]);
+  const [showPicker, setShowPicker] = useState(false);  
   const [form, setForm] = useState({
     batch_id: '', rating: '5', user_name: '',
     comments: '', bug_report: '', feature_request: '',
@@ -58,7 +66,7 @@ export default function AddFeedbackModal({ visible, onClose, onSuccess }) {
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={S.modalOverlay}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ width: '100%' }}>
-          <Card style={[S.modalCard, { maxHeight: '92%' }]}>
+          <Card style={S.modalCard}>
             <CardAccent />
             <View style={S.modalHeader}>
               <Text style={S.modalTitle}>Submit Feedback</Text>
@@ -67,21 +75,48 @@ export default function AddFeedbackModal({ visible, onClose, onSuccess }) {
               </SpringButton>
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false}>
+            <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 500 }}>
               {/* Batch picker */}
               <Text style={S.label}>Select Batch *</Text>
-              <View style={styles.batchPicker}>
-                {batches.length === 0
-                  ? <Text style={{ color: C.slate, fontSize: 12, padding: 10 }}>No completed batches found</Text>
-                  : batches.map(b => (
-                    <TouchableOpacity key={b.batch_id} onPress={() => f('batch_id', b.batch_id)} activeOpacity={0.8}
-                      style={[styles.batchOption, form.batch_id == b.batch_id && styles.batchOptionActive]}>
-                      <Text style={[styles.batchOptionText, form.batch_id == b.batch_id && { color: '#fff' }]}>{b.batch_code}</Text>
-                      <Text style={[styles.batchOptionSub,  form.batch_id == b.batch_id && { color: 'rgba(255,255,255,0.75)' }]}>{b.completed_date}</Text>
-                    </TouchableOpacity>
-                  ))
-                }
-              </View>
+              <TouchableOpacity onPress={() => setShowPicker(true)} activeOpacity={0.8} style={styles.batchTrigger}>
+                <Ionicons name="layers-outline" size={16} color={form.batch_id ? C.teal : C.slate} />
+                <Text style={[styles.batchTriggerText, form.batch_id && { color: C.charcoal }]}>
+                  {selectedBatch ? shortBatch(selectedBatch.batch_code) + '  ·  ' + selectedBatch.completed_date : 'Tap to select a batch'}
+                </Text>
+                <Ionicons name="chevron-down" size={16} color={C.slate} />
+              </TouchableOpacity>
+
+              {/* Picker sheet */}
+              <Modal visible={showPicker} animationType="slide" transparent onRequestClose={() => setShowPicker(false)}>
+                <TouchableOpacity style={styles.pickerOverlay} activeOpacity={1} onPress={() => setShowPicker(false)}>
+                  <View style={styles.pickerSheet}>
+                    <View style={styles.pickerHandle} />
+                    <Text style={styles.pickerTitle}>Select Completed Batch</Text>
+                    <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 360 }}>
+                      {batches.length === 0
+                        ? <Text style={S.emptyText}>No completed batches found</Text>
+                        : batches.map(b => {
+                          const active = form.batch_id == b.batch_id;
+                          return (
+                            <TouchableOpacity key={b.batch_id} activeOpacity={0.8}
+                              onPress={() => { f('batch_id', b.batch_id); setShowPicker(false); }}
+                              style={[styles.pickerOption, active && styles.pickerOptionActive]}
+                            >
+                              <View style={{ flex: 1 }}>
+                                <Text style={[styles.pickerOptionCode, active && { color: C.teal }]}>
+                                  {shortBatch(b.batch_code)}
+                                </Text>
+                                <Text style={styles.pickerOptionDate}>{b.completed_date}</Text>
+                              </View>
+                              {active && <Ionicons name="checkmark-circle" size={20} color={C.teal} />}
+                            </TouchableOpacity>
+                          );
+                        })
+                      }
+                    </ScrollView>
+                  </View>
+                </TouchableOpacity>
+              </Modal>
 
               {/* Name */}
               <ClayInput label="Your Name *" value={form.user_name} onChangeText={v => f('user_name', v)} placeholder="Enter your name" />
@@ -160,4 +195,40 @@ const styles = StyleSheet.create({
   sectionBoxTitle:  { fontSize: 12, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4 },
 
   hint: { fontSize: 11, color: C.slate, textAlign: 'center', marginBottom: 8 },
+  batchTrigger: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    backgroundColor: '#E4EDF1', borderRadius: 12,
+    paddingHorizontal: 14, paddingVertical: 13,
+    borderWidth: 2, borderColor: 'transparent', marginBottom: 16,
+  },
+  batchTriggerText: { flex: 1, fontSize: 13, color: C.slate, fontWeight: '600' },
+
+  pickerOverlay: {
+    flex: 1, backgroundColor: 'rgba(44,107,127,0.5)',
+    justifyContent: 'flex-end',
+  },
+  pickerSheet: {
+    backgroundColor: '#F8FAFB', borderTopLeftRadius: 24, borderTopRightRadius: 24,
+    padding: 20, paddingBottom: 36,
+  },
+  pickerHandle: {
+    width: 40, height: 4, borderRadius: 99,
+    backgroundColor: C.cloud, alignSelf: 'center', marginBottom: 16,
+  },
+  pickerTitle: {
+    fontSize: 16, fontWeight: '900', color: C.deep,
+    marginBottom: 14, textAlign: 'center',
+  },
+  pickerOption: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingVertical: 14, paddingHorizontal: 16,
+    borderRadius: 12, marginBottom: 6,
+    backgroundColor: 'rgba(237,242,244,0.8)',
+    borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.9)',
+  },
+  pickerOptionActive: {
+    borderColor: C.teal, backgroundColor: 'rgba(78,205,196,0.08)',
+  },
+  pickerOptionCode: { fontSize: 13, fontWeight: '800', color: C.charcoal, marginBottom: 2 },
+  pickerOptionDate: { fontSize: 11, color: C.steel },
 });
