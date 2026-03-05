@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { StyleSheet, Text, View, Platform, StatusBar, Animated } from 'react-native';
+import { StyleSheet, Text, View, Platform, StatusBar, Alert, Animated } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
@@ -116,10 +116,10 @@ export default function DashboardScreen({
 
   const renderTab = () => {
     switch (activeTab) {
-      case 'dashboard': return <DashboardTab dashboardData={dashboardData} controlling={controlling} sendCommand={sendCommand} {...demo} />;
-      case 'batches':   return <BatchesTab   batches={batches}   />;
-      case 'inventory': return <InventoryTab fishScales={fishScales} additives={additives} onAdd={() => setShowAddInventory(true)} onRefresh={onDashboardUpdate} />;
-      case 'feedback':  return <FeedbackTab  feedback={feedback}  onAdd={() => setShowAddFeedback(true)}  />;
+      case 'dashboard': return <DashboardTab dashboardData={dashboardData} controlling={controlling} sendCommand={sendCommand} {...demo} onRefresh={onDashboardUpdate} refreshing={refreshing} />;
+      case 'batches':   return <BatchesTab   batches={batches} onRefresh={onDashboardUpdate} refreshing={refreshing} />;
+      case 'inventory': return <InventoryTab fishScales={fishScales} additives={additives} onAdd={() => setShowAddInventory(true)} onRefresh={onDashboardUpdate} refreshing={refreshing} />;
+      case 'feedback':  return <FeedbackTab  feedback={feedback} onAdd={() => setShowAddFeedback(true)} onRefresh={onDashboardUpdate} refreshing={refreshing} />;
       case 'game':      return <GameTab />;
     }
   };

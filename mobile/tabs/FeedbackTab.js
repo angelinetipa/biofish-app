@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert, RefreshControl } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { Card } from '../components/Card';
@@ -39,7 +39,6 @@ function FeedbackCard({ item }) {
   return (
     <TouchableOpacity onPress={() => setOpen(o => !o)} activeOpacity={0.85} style={{ marginBottom: 10 }}>
       <View style={[styles.card, open && styles.cardOpen]}>
-        {/* Top row */}
         <View style={styles.cardTop}>
           <View style={{ flex: 1 }}>
             <View style={styles.cardTitleRow}>
@@ -53,7 +52,6 @@ function FeedbackCard({ item }) {
               <Ionicons name="calendar-outline" size={11} color={C.steel} />
               <Text style={styles.metaText}>{fmt(item.date)}</Text>
             </View>
-            {/* Type tags */}
             <View style={styles.tagsRow}>
               {hasComments && <TypeTag icon="chatbubble-outline"  label="Comment" color={C.teal}    />}
               {hasBug      && <TypeTag icon="bug-outline"         label="Bug"     color={C.error}   />}
@@ -63,7 +61,6 @@ function FeedbackCard({ item }) {
           <Ionicons name={open ? 'chevron-up' : 'chevron-down'} size={16} color={C.slate} style={{ marginLeft: 8, marginTop: 2 }} />
         </View>
 
-        {/* Expanded */}
         {open && (
           <View style={styles.expandedWrap}>
             <View style={styles.divider} />
@@ -101,12 +98,11 @@ function FeedbackCard({ item }) {
   );
 }
 
-export default function FeedbackTab({ feedback, onAdd }) {
-  // Stats
-  const total   = feedback.length;
-  const avgRating = total ? (feedback.reduce((s, f) => s + Number(f.rating || 0), 0) / total).toFixed(1) : '—';
-  const bugs     = feedback.filter(f => f.bug_report).length;
-  const features = feedback.filter(f => f.feature_request).length;
+export default function FeedbackTab({ feedback, onAdd, onRefresh, refreshing }) {
+  const total      = feedback.length;
+  const avgRating  = total ? (feedback.reduce((s, f) => s + Number(f.rating || 0), 0) / total).toFixed(1) : '—';
+  const bugs       = feedback.filter(f => f.bug_report).length;
+  const features   = feedback.filter(f => f.feature_request).length;
 
   return (
     <Card style={S.tabCard}>
@@ -121,14 +117,13 @@ export default function FeedbackTab({ feedback, onAdd }) {
           </SpringButton>
         </View>
 
-        {/* Stats row */}
         {total > 0 && (
           <View style={styles.statsRow}>
             {[
-              { icon: 'star',         label: 'Avg Rating', value: avgRating, color: '#F0A04B' },
-              { icon: 'chatbubbles',  label: 'Total',      value: total,     color: C.teal    },
-              { icon: 'bug',          label: 'Bugs',       value: bugs,      color: C.error   },
-              { icon: 'bulb',         label: 'Features',   value: features,  color: C.warning },
+              { icon: 'star',        label: 'Avg Rating', value: avgRating, color: '#F0A04B' },
+              { icon: 'chatbubbles', label: 'Total',      value: total,     color: C.teal    },
+              { icon: 'bug',         label: 'Bugs',       value: bugs,      color: C.error   },
+              { icon: 'bulb',        label: 'Features',   value: features,  color: C.warning },
             ].map((s, i) => (
               <View key={i} style={styles.statCard}>
                 <Ionicons name={s.icon} size={16} color={s.color} />
@@ -140,7 +135,18 @@ export default function FeedbackTab({ feedback, onAdd }) {
         )}
       </View>
 
-      <ScrollView style={S.tabScroll} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={S.tabScroll}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing || false}
+            onRefresh={onRefresh}
+            tintColor={C.teal}
+            colors={[C.teal]}
+          />
+        }
+      >
         <View style={S.tabScrollInner}>
           {feedback.length === 0
             ? <Text style={S.emptyText}>No feedback yet</Text>

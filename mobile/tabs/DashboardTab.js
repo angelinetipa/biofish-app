@@ -1,25 +1,32 @@
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import SpringButton from '../components/SpringButton';
 import { Card } from '../components/Card';
 import MachineCard from '../components/MachineCard';
 import { C, S } from '../constants/theme';
 
-export default function DashboardTab({ dashboardData, controlling, sendCommand, demoMode, setDemoMode, demoStatus, demoCommand, stageIndex, timeLeft, temps }) {
+export default function DashboardTab({ dashboardData, controlling, sendCommand, demoMode, setDemoMode, demoStatus, demoCommand, stageIndex, timeLeft, temps, onRefresh, refreshing }) {
 
   const handleCommand = (cmd) => {
-    if (cmd === 'start') {
-      sendCommand('start'); // always open the modal for start
-      return;
-    }
+    if (cmd === 'start') { sendCommand('start'); return; }
     if (demoMode) demoCommand(cmd);
     else sendCommand(cmd);
   };
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 14, paddingBottom: 16 }}>
-
+    <ScrollView
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={{ gap: 14, paddingBottom: 16 }}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing || false}
+          onRefresh={onRefresh}
+          tintColor={C.teal}
+          colors={[C.teal]}
+        />
+      }
+    >
       {/* Demo toggle */}
       <SpringButton onPress={() => {
         if (demoMode && demoStatus !== 'idle') demoCommand('stop');
@@ -47,10 +54,10 @@ export default function DashboardTab({ dashboardData, controlling, sendCommand, 
       {/* Metrics */}
       <View style={styles.metricsGrid}>
         {[
-          { icon: 'layers',         label: 'Batches',   value: dashboardData.totalBatches        },
-          { icon: 'checkmark-done', label: 'Success',   value: `${dashboardData.successRate}%`   },
-          { icon: 'time',           label: 'Avg Time',  value: `${dashboardData.avgTime}m`       },
-          { icon: 'warning',        label: 'Low Stock', value: dashboardData.lowStock            },
+          { icon: 'layers',         label: 'Batches',   value: dashboardData.totalBatches      },
+          { icon: 'checkmark-done', label: 'Success',   value: `${dashboardData.successRate}%` },
+          { icon: 'time',           label: 'Avg Time',  value: `${dashboardData.avgTime}m`     },
+          { icon: 'warning',        label: 'Low Stock', value: dashboardData.lowStock          },
         ].map((m, i) => (
           <Card key={i} style={styles.metricCard}>
             <Ionicons name={m.icon} size={22} color={C.ocean} style={{ marginBottom: 6 }} />
@@ -64,18 +71,11 @@ export default function DashboardTab({ dashboardData, controlling, sendCommand, 
 }
 
 const styles = StyleSheet.create({
-  demoToggle: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: 'rgba(248,250,251,0.85)', borderRadius: 12,
-    paddingVertical: 10, paddingHorizontal: 14,
-    borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.7)',
-    shadowColor: '#ffffff', shadowOffset: { width: -3, height: -3 },
-    shadowOpacity: 0.5, shadowRadius: 8, elevation: 4,
-  },
+  demoToggle:       { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(248,250,251,0.85)', borderRadius: 12, paddingVertical: 10, paddingHorizontal: 14, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.7)', shadowColor: '#ffffff', shadowOffset: { width: -3, height: -3 }, shadowOpacity: 0.5, shadowRadius: 8, elevation: 4 },
   demoToggleActive: { borderColor: 'rgba(78,205,196,0.5)', backgroundColor: 'rgba(248,252,252,0.95)' },
-  demoToggleText: { fontSize: 12, fontWeight: '600', color: C.slate, flex: 1 },
-  metricsGrid:  { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  metricCard:   { flex: 1, minWidth: '45%', padding: 16, alignItems: 'center' },
-  metricValue:  { fontSize: 22, fontWeight: '900', color: C.deep, marginBottom: 2 },
-  metricLabel:  { fontSize: 10, fontWeight: '700', color: C.steel, textTransform: 'uppercase', letterSpacing: 0.4 },
+  demoToggleText:   { fontSize: 12, fontWeight: '600', color: C.slate, flex: 1 },
+  metricsGrid:      { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  metricCard:       { flex: 1, minWidth: '45%', padding: 16, alignItems: 'center' },
+  metricValue:      { fontSize: 22, fontWeight: '900', color: C.deep, marginBottom: 2 },
+  metricLabel:      { fontSize: 10, fontWeight: '700', color: C.steel, textTransform: 'uppercase', letterSpacing: 0.4 },
 });

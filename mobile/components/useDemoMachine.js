@@ -70,14 +70,20 @@ export default function useDemoMachine(onRefresh) {
       case 'pause':
         pausedRef.current = true;
         setDemoStatus('paused');
-        dbCall('pause');
+        if (batchIdRef.current) {
+          axios.post(`${API_URL}/demo_control.php`, { action: 'pause', batch_id: batchIdRef.current })
+            .finally(() => onRefresh?.()).catch(() => {});
+        }
         break;
       case 'continue':
         pausedRef.current = false;
         setDemoStatus('running');
-        dbCall('resume');
+        if (batchIdRef.current) {
+          axios.post(`${API_URL}/demo_control.php`, { action: 'resume', batch_id: batchIdRef.current })
+            .finally(() => onRefresh?.()).catch(() => {});
+        }
         break;
-      case 'stop':
+        case 'stop':
         clearTimer();
         if (batchIdRef.current) {
           axios.post(`${API_URL}/demo_control.php`, {
