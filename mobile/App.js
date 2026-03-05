@@ -24,6 +24,7 @@ export default function App() {
   const [fishScales, setFishScales] = useState([]);
   const [additives, setAdditives]   = useState([]);
   const [feedback, setFeedback] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
 
   const loadDashboard = async () => {
     try {
@@ -52,6 +53,7 @@ export default function App() {
     try {
       const res = await axios.post(`${API_URL}/auth.php`, { username, password });
       if (res.data.success) {
+        setCurrentUser(res.data.user);
         setScreen('dashboard');
         loadDashboard();
       } else {
@@ -100,6 +102,7 @@ export default function App() {
       activeTab={activeTab} setActiveTab={setActiveTab}
       refreshing={refreshing} onRefresh={onRefresh}
       onLogout={handleLogout}
+      currentUser={currentUser}
     />
   );
 }

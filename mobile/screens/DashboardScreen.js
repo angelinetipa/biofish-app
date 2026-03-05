@@ -16,6 +16,7 @@ import { C } from '../constants/theme';
 import { API_URL } from '../constants/api';
 import StartBatchModal from '../modals/StartBatchModal';
 import GameTab from '../tabs/GameTab';
+import ManageUsersScreen from './ManageUsersScreen';
 
 const TABS = [
   { key: 'dashboard', label: 'Dashboard', icon: 'home-outline',       iconActive: 'home'        },
@@ -23,11 +24,14 @@ const TABS = [
   { key: 'inventory', label: 'Inventory', icon: 'layers-outline',     iconActive: 'layers'      },
   { key: 'feedback',  label: 'Feedback',  icon: 'chatbubble-outline', iconActive: 'chatbubble'  },
   { key: 'game',      label: 'Game',      icon: 'game-controller-outline', iconActive: 'game-controller' },
+  { key: 'users',     label: 'Users',     icon: 'people-outline',     iconActive: 'people' },
 ];
 
+//  Props passed from App.js:
 export default function DashboardScreen({
   dashboardData, batches, fishScales, additives, feedback,
   activeTab, setActiveTab, refreshing, onRefresh, onLogout, onDashboardUpdate,
+  currentUser,
 }) {
   const [controlling,       setControlling]       = useState(false);
   const [showAddInventory,  setShowAddInventory]  = useState(false);
@@ -116,11 +120,12 @@ export default function DashboardScreen({
 
   const renderTab = () => {
     switch (activeTab) {
-      case 'dashboard': return <DashboardTab dashboardData={dashboardData} controlling={controlling} sendCommand={sendCommand} {...demo} onRefresh={onDashboardUpdate} refreshing={refreshing} />;
+      case 'dashboard': return <DashboardTab dashboardData={dashboardData} controlling={controlling} sendCommand={sendCommand} {...demo} onRefresh={onDashboardUpdate} refreshing={refreshing} onOpenGame={() => setActiveTab('game')}/>;
       case 'batches':   return <BatchesTab   batches={batches} onRefresh={onDashboardUpdate} refreshing={refreshing} />;
       case 'inventory': return <InventoryTab fishScales={fishScales} additives={additives} onAdd={() => setShowAddInventory(true)} onRefresh={onDashboardUpdate} refreshing={refreshing} />;
       case 'feedback':  return <FeedbackTab  feedback={feedback} onAdd={() => setShowAddFeedback(true)} onRefresh={onDashboardUpdate} refreshing={refreshing} />;
-      case 'game':      return <GameTab />;
+      case 'users':     return <ManageUsersScreen currentUser={currentUser} onBack={() => setActiveTab('dashboard')} />;
+      case 'game': return <GameTab />;
     }
   };
 
@@ -163,7 +168,7 @@ export default function DashboardScreen({
 
       {/* Bottom tab bar */}
       <View style={styles.tabBar}>
-        {TABS.map(tab => {
+        {TABS.filter(t => t.key !== 'game' && (t.key !== 'users' || currentUser?.role === 'admin')).map(tab => {
           const active = activeTab === tab.key;
           return (
             <SpringButton key={tab.key} onPress={() => setActiveTab(tab.key)} style={{ flex: 1 }}>

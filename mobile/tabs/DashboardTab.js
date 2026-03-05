@@ -6,7 +6,7 @@ import { Card } from '../components/Card';
 import MachineCard from '../components/MachineCard';
 import { C, S } from '../constants/theme';
 
-export default function DashboardTab({ dashboardData, controlling, sendCommand, demoMode, setDemoMode, demoStatus, demoCommand, stageIndex, timeLeft, temps, onRefresh, refreshing }) {
+export default function DashboardTab({ dashboardData, controlling, sendCommand, demoMode, setDemoMode, demoStatus, demoCommand, stageIndex, timeLeft, temps, onRefresh, refreshing, onOpenGame }) {
 
   const handleCommand = (cmd) => {
     if (cmd === 'start') { sendCommand('start'); return; }
@@ -66,6 +66,17 @@ export default function DashboardTab({ dashboardData, controlling, sendCommand, 
           </Card>
         ))}
       </View>
+      {/* Game */}
+      <SpringButton onPress={onOpenGame}>
+        <View style={styles.gameCard}>
+          <Text style={styles.gameEmoji}>🎮</Text>
+          <View>
+            <Text style={styles.gameTitle}>Scale Catcher</Text>
+            <Text style={styles.gameSub}>Take a break</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={C.slate} style={{ marginLeft: 'auto' }} />
+        </View>
+      </SpringButton>
     </ScrollView>
   );
 }
@@ -78,4 +89,13 @@ const styles = StyleSheet.create({
   metricCard:       { flex: 1, minWidth: '45%', padding: 16, alignItems: 'center' },
   metricValue:      { fontSize: 22, fontWeight: '900', color: C.deep, marginBottom: 2 },
   metricLabel:      { fontSize: 10, fontWeight: '700', color: C.steel, textTransform: 'uppercase', letterSpacing: 0.4 },
+  gameCard: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    backgroundColor: 'rgba(248,250,251,0.97)',
+    borderRadius: 16, padding: 14,
+    borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.85)',
+  },
+  gameEmoji: { fontSize: 28 },
+  gameTitle: { fontSize: 13, fontWeight: '800', color: C.deep },
+  gameSub:   { fontSize: 11, color: C.slate },
 });
