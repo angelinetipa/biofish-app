@@ -17,6 +17,7 @@ import { API_URL } from '../constants/api';
 import StartBatchModal from '../modals/StartBatchModal';
 import GameTab from '../tabs/GameTab';
 import ManageUsersScreen from './ManageUsersScreen';
+import HelpScreen from './HelpScreen';
 
 const TABS = [
   { key: 'dashboard', label: 'Dashboard', icon: 'home-outline',       iconActive: 'home'        },
@@ -37,6 +38,7 @@ export default function DashboardScreen({
   const [showAddInventory,  setShowAddInventory]  = useState(false);
   const [showAddFeedback,   setShowAddFeedback]   = useState(false);
   const [showStartBatch, setShowStartBatch] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
 
   const demo = useDemoMachine(onDashboardUpdate);
 
@@ -154,6 +156,11 @@ export default function DashboardScreen({
           <View style={styles.headerLogo}><Text style={{ fontSize: 18 }}>🐟</Text></View>
           <Text style={styles.headerTitle}>BIO-FISH</Text>
         </View>
+        <SpringButton onPress={() => setShowHelp(true)}>
+          <View style={styles.logoutBtn}>
+            <Ionicons name="help-circle-outline" size={16} color={C.ocean} />
+          </View>
+        </SpringButton>
         <SpringButton onPress={onLogout}>
           <View style={styles.logoutBtn}>
             <Ionicons name="log-out-outline" size={16} color={C.ocean} />
@@ -225,6 +232,14 @@ export default function DashboardScreen({
           setShowStartBatch(false);
         }}
       />
+
+      {/* Help Screen */}
+      {showHelp && (
+        <View style={StyleSheet.absoluteFillObject}>
+          <HelpScreen onBack={() => setShowHelp(false)} />
+        </View>
+      )}
+
     </LinearGradient>
   );
 }
