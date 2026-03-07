@@ -180,7 +180,7 @@ export default function DashboardScreen({
         {renderTab()}
       </View>
 
-      {/* Help / About overlays — rendered before tab bar so tab bar stays on top */}
+      {/* Help / About — full screen overlays, tab bar renders on top via higher elevation */}
       {showHelp  && <View style={[StyleSheet.absoluteFillObject, { zIndex: 999, elevation: 999 }]}><HelpScreen  onBack={() => setShowHelp(false)}  /></View>}
       {showAbout && <View style={[StyleSheet.absoluteFillObject, { zIndex: 999, elevation: 999 }]}><AboutScreen onBack={() => setShowAbout(false)} /></View>}
 
@@ -189,7 +189,7 @@ export default function DashboardScreen({
         {TABS.filter(t => t.key !== 'game' && (t.key !== 'users' || currentUser?.role === 'admin')).map(tab => {
           const active = activeTab === tab.key;
           return (
-            <SpringButton key={tab.key} onPress={() => setActiveTab(tab.key)} style={{ flex: 1 }}>
+            <SpringButton key={tab.key} onPress={() => { setShowHelp(false); setShowAbout(false); setActiveTab(tab.key); }} style={{ flex: 1 }}>
               <View style={styles.tabItem}>
                 {active && (
                   <LinearGradient colors={[C.tealLight, C.ocean]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.tabActivePill} />
@@ -272,7 +272,8 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 22, borderTopRightRadius: 22,
     paddingBottom: Platform.OS === 'ios' ? 24 : 10,
     paddingTop: 10, paddingHorizontal: 8,
-    shadowColor: '#ffffff', shadowOffset: { width: -4, height: -4 }, shadowOpacity: 0.5, shadowRadius: 12, elevation: 20,
+    shadowColor: '#ffffff', shadowOffset: { width: -4, height: -4 }, shadowOpacity: 0.5, shadowRadius: 12, elevation: 1000,
+    zIndex: 1000,
     borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.9)', borderBottomWidth: 0,
   },
   tabItem:       { alignItems: 'center', justifyContent: 'center', paddingVertical: 4, borderRadius: 14, position: 'relative' },
