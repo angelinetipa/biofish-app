@@ -18,6 +18,7 @@ import StartBatchModal from '../modals/StartBatchModal';
 import GameTab from '../tabs/GameTab';
 import ManageUsersScreen from './ManageUsersScreen';
 import HelpScreen from './HelpScreen';
+import AboutScreen from './AboutScreen';
 
 const TABS = [
   { key: 'dashboard', label: 'Dashboard', icon: 'home-outline',       iconActive: 'home'        },
@@ -39,7 +40,7 @@ export default function DashboardScreen({
   const [showAddFeedback,   setShowAddFeedback]   = useState(false);
   const [showStartBatch, setShowStartBatch] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
-
+  const [showAbout, setShowAbout] = useState(false);
   const demo = useDemoMachine(onDashboardUpdate);
 
   const bx = useRef(Array.from({ length: 4 }, () => new Animated.Value(0))).current;
@@ -161,6 +162,12 @@ export default function DashboardScreen({
             <Ionicons name="help-circle-outline" size={16} color={C.ocean} />
           </View>
         </SpringButton>
+        {/* About the app */}
+        <SpringButton onPress={() => setShowAbout(true)}>
+          <View style={styles.logoutBtn}>
+            <Ionicons name="information-circle-outline" size={16} color={C.ocean} />
+          </View>
+      </SpringButton>
         <SpringButton onPress={onLogout}>
           <View style={styles.logoutBtn}>
             <Ionicons name="log-out-outline" size={16} color={C.ocean} />
@@ -239,7 +246,12 @@ export default function DashboardScreen({
           <HelpScreen onBack={() => setShowHelp(false)} />
         </View>
       )}
-
+      {/* About Screen */}
+      {showAbout && (
+        <View style={StyleSheet.absoluteFillObject}>
+          <AboutScreen onBack={() => setShowAbout(false)} />
+        </View>
+      )}
     </LinearGradient>
   );
 }
