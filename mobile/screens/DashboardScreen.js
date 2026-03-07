@@ -181,8 +181,8 @@ export default function DashboardScreen({
       </View>
 
       {/* Help / About overlays — rendered before tab bar so tab bar stays on top */}
-      {showHelp  && <View style={StyleSheet.absoluteFillObject}><HelpScreen  onBack={() => setShowHelp(false)}  /></View>}
-      {showAbout && <View style={StyleSheet.absoluteFillObject}><AboutScreen onBack={() => setShowAbout(false)} /></View>}
+      {showHelp  && <View style={[StyleSheet.absoluteFillObject, { zIndex: 999, elevation: 999 }]}><HelpScreen  onBack={() => setShowHelp(false)}  /></View>}
+      {showAbout && <View style={[StyleSheet.absoluteFillObject, { zIndex: 999, elevation: 999 }]}><AboutScreen onBack={() => setShowAbout(false)} /></View>}
 
       {/* Bottom tab bar */}
       <View style={styles.tabBar}>
