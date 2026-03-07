@@ -1,1 +1,2 @@
-export const API_URL = 'http://192.168.1.29/biofish-backend/api'; // CHANGE THIS
+import { LOCAL_API_URL } from './env';
+export const API_URL = LOCAL_API_URL;
