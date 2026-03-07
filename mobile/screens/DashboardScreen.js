@@ -180,6 +180,10 @@ export default function DashboardScreen({
         {renderTab()}
       </View>
 
+      {/* Help / About overlays — rendered before tab bar so tab bar stays on top */}
+      {showHelp  && <View style={StyleSheet.absoluteFillObject}><HelpScreen  onBack={() => setShowHelp(false)}  /></View>}
+      {showAbout && <View style={StyleSheet.absoluteFillObject}><AboutScreen onBack={() => setShowAbout(false)} /></View>}
+
       {/* Bottom tab bar */}
       <View style={styles.tabBar}>
         {TABS.filter(t => t.key !== 'game' && (t.key !== 'users' || currentUser?.role === 'admin')).map(tab => {
@@ -240,18 +244,7 @@ export default function DashboardScreen({
         }}
       />
 
-      {/* Help Screen */}
-      {showHelp && (
-        <View style={StyleSheet.absoluteFillObject}>
-          <HelpScreen onBack={() => setShowHelp(false)} />
-        </View>
-      )}
-      {/* About Screen */}
-      {showAbout && (
-        <View style={StyleSheet.absoluteFillObject}>
-          <AboutScreen onBack={() => setShowAbout(false)} />
-        </View>
-      )}
+      
     </LinearGradient>
   );
 }

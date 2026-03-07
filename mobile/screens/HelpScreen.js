@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === 'ios' ? 56 : (StatusBar.currentHeight || 24) + 12,
     paddingBottom: 14, paddingHorizontal: 16,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: 'rgba(248,250,251,0.97)',
+    backgroundColor: '#F8FAFB',
     borderBottomLeftRadius: 24, borderBottomRightRadius: 24,
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.8)', borderTopWidth: 0,
     shadowColor: '#fff', shadowOffset: { width: -6, height: -6 }, shadowOpacity: 0.5, shadowRadius: 16, elevation: 12,
