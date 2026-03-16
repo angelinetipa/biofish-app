@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { StyleSheet, Text, View, Platform, StatusBar, Alert, Animated } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { View, Text, StyleSheet, Platform, StatusBar, Animated, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
-
+import { LinearGradient } from 'expo-linear-gradient';
+ 
 import SpringButton from '../components/SpringButton';
 import useDemoMachine from '../components/useDemoMachine';
 import DashboardTab  from '../tabs/DashboardTab';
@@ -35,6 +35,7 @@ export default function DashboardScreen({
   activeTab, setActiveTab, refreshing, onRefresh, onLogout, onDashboardUpdate,
   currentUser,
 }) {
+  const [showDrawer, setShowDrawer] = useState(false);
   const [controlling,       setControlling]       = useState(false);
   const [showAddInventory,  setShowAddInventory]  = useState(false);
   const [showAddFeedback,   setShowAddFeedback]   = useState(false);
@@ -151,27 +152,17 @@ export default function DashboardScreen({
           transform: [{ translateX: bx[i] }, { translateY: by[i] }],
         }} />
       ))}
-      {/* Header */}
+{/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <View style={styles.headerLogo}><Text style={{ fontSize: 18 }}>🐟</Text></View>
           <Text style={styles.headerTitle}>BIO-FISH</Text>
         </View>
-        <SpringButton onPress={() => setShowHelp(true)}>
-          <View style={styles.logoutBtn}>
-            <Ionicons name="help-circle-outline" size={16} color={C.ocean} />
-          </View>
-        </SpringButton>
-        {/* About the app */}
-        <SpringButton onPress={() => setShowAbout(true)}>
-          <View style={styles.logoutBtn}>
-            <Ionicons name="information-circle-outline" size={16} color={C.ocean} />
-          </View>
-      </SpringButton>
-        <SpringButton onPress={onLogout}>
-          <View style={styles.logoutBtn}>
-            <Ionicons name="log-out-outline" size={16} color={C.ocean} />
-            <Text style={styles.logoutText}>Logout</Text>
+        <SpringButton onPress={() => setShowDrawer(true)}>
+          <View style={styles.menuBtn}>
+            <View style={styles.menuBar} />
+            <View style={styles.menuBar} />
+            <View style={styles.menuBar} />
           </View>
         </SpringButton>
       </View>
@@ -179,6 +170,7 @@ export default function DashboardScreen({
       <View style={styles.tabContainer}>
         {renderTab()}
       </View>
+
 
       {/* Help / About — full screen overlays, tab bar renders on top via higher elevation */}
       {showHelp  && <View style={[StyleSheet.absoluteFillObject, { zIndex: 999, elevation: 999 }]}><HelpScreen  onBack={() => setShowHelp(false)}  /></View>}
@@ -243,6 +235,36 @@ export default function DashboardScreen({
           setShowStartBatch(false);
         }}
       />
+{/* Drawer */}
+{showDrawer && (
+  <TouchableOpacity
+    style={styles.drawerBackdrop}
+    activeOpacity={1}
+    onPress={() => setShowDrawer(false)}
+  >
+    <View style={styles.drawer}>
+      <SpringButton onPress={() => { setShowDrawer(false); setShowHelp(true); }}>
+        <View style={styles.drawerItem}>
+          <Ionicons name="help-circle-outline" size={18} color={C.ocean} />
+          <Text style={styles.drawerItemText}>Help</Text>
+        </View>
+      </SpringButton>
+      <SpringButton onPress={() => { setShowDrawer(false); setShowAbout(true); }}>
+        <View style={styles.drawerItem}>
+          <Ionicons name="information-circle-outline" size={18} color={C.ocean} />
+          <Text style={styles.drawerItemText}>About</Text>
+        </View>
+      </SpringButton>
+      <View style={styles.drawerDivider} />
+      <SpringButton onPress={() => { setShowDrawer(false); onLogout(); }}>
+        <View style={styles.drawerItem}>
+          <Ionicons name="log-out-outline" size={18} color="#e53935" />
+          <Text style={[styles.drawerItemText, { color: '#e53935' }]}>Logout</Text>
+        </View>
+      </SpringButton>
+    </View>
+  </TouchableOpacity>
+)}
 
       
     </LinearGradient>
@@ -280,4 +302,11 @@ const styles = StyleSheet.create({
   tabActivePill: { position: 'absolute', top: 0, left: '20%', right: '20%', height: 3, borderRadius: 99 },
   tabLabel:      { fontSize: 10, fontWeight: '600', color: C.slate, marginTop: 3, letterSpacing: 0.2 },
   tabLabelActive:{ color: C.teal, fontWeight: '800' },
+  menuBtn:         { width: 36, height: 36, borderRadius: 10, backgroundColor: 'rgba(78,205,196,0.1)', borderWidth: 1.5, borderColor: 'rgba(78,205,196,0.35)', alignItems: 'center', justifyContent: 'center', gap: 4 },
+menuBar:         { width: 14, height: 2, backgroundColor: C.ocean, borderRadius: 2 },
+drawerBackdrop:  { ...StyleSheet.absoluteFillObject, zIndex: 900 },
+drawer:          { position: 'absolute', top: Platform.OS === 'ios' ? 110 : (StatusBar.currentHeight || 24) + 74, right: 16, backgroundColor: '#fff', borderRadius: 16, paddingVertical: 8, minWidth: 160, elevation: 20, zIndex: 901, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 12, borderWidth: 1, borderColor: 'rgba(78,205,196,0.2)' },
+drawerItem:      { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, paddingHorizontal: 16 },
+drawerItemText:  { fontSize: 14, fontWeight: '700', color: C.deep },
+drawerDivider:   { height: 1, backgroundColor: 'rgba(139,157,175,0.15)', marginVertical: 4 },
 });
